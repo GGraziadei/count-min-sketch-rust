@@ -88,10 +88,9 @@ fn main() {
         cms.increment(item);
     }
 
-
     println!("Apple count (est):  {}", cms.estimate("apple"));  // Likely 3
     println!("Banana count (est): {}", cms.estimate("banana")); // Likely 2
-    println!("Durian count (est): {}", cms.estimate("Gianluca")); // 0 (if no collisions)
+    println!("Gianluca count (est): {}", cms.estimate("Gianluca")); // 0 (if no collisions)
 
     cms.clear();
     assert_eq!(cms.estimate("apple"), 0);

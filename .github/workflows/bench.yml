@@ -2,6 +2,7 @@ name: Generate Performance Report
 on:
   push:
     branches: [ main ]
+    workflow_dispatch:
 
 permissions:
   contents: write
