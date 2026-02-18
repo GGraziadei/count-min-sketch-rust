@@ -1,0 +1,19 @@
+[package]
+name = "count_min_sketch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ahash = "0.8.12"
+stats_alloc = "0.1"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "cms_bench"
+harness = false
+
+[[bench]]
+name = "cms_error"
+harness = false
