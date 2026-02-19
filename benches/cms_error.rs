@@ -1,12 +1,12 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use count_min_sketch_rs::CountMinSketch;
 use std::collections::HashMap;
+use std::num::NonZeroUsize;
 
 fn bench_accuracy_metrics(c: &mut Criterion) {
     let mut group = c.benchmark_group("CMS_Error_Measurement");
 
-    // Configurazioni da testare
-    let configurations = [
+    let configurations: [(usize, usize); 3] = [
         (1024, 4),    // Cache L1/L2
         (65536, 8),   // Cache L3
         (1048576, 16) // RAM
@@ -15,10 +15,9 @@ fn bench_accuracy_metrics(c: &mut Criterion) {
     let n_elements = 1_000_000;
 
     for (width, depth) in configurations {
-        let mut cms = CountMinSketch::new(width, depth);
+        let mut cms = CountMinSketch::new(NonZeroUsize::try_from(width).unwrap(), NonZeroUsize::try_from(depth).unwrap());
         let mut ground_truth = HashMap::new();
 
-        // 1. Popolamento (Setup)
         for i in 0..n_elements {
             let key = if i % 1000 == 0 { "hitter".into() } else { format!("i_{}", i) };
             cms.increment(&key);
@@ -33,9 +32,6 @@ fn bench_accuracy_metrics(c: &mut Criterion) {
             total_relative_error += error / actual as f64;
         }
         let avg_relative_error = total_relative_error / n_elements as f64;
-
-        // 3. Reporting
-        // Usiamo l'errore nel nome del benchmark così Criterion lo mostrerà nei grafici
         let bench_label = format!("W{}D{}_ARE_{:.4}", width, depth, avg_relative_error);
 
         group.bench_function(BenchmarkId::new("RelativeError", bench_label), |b| {

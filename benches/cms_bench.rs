@@ -2,6 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion, Benchmark
 use count_min_sketch_rs::CountMinSketch;
 use std::time::Duration;
 use std::alloc::System;
+use std::num::NonZeroUsize;
 use stats_alloc::{StatsAlloc, INSTRUMENTED_SYSTEM};
 
 #[global_allocator]
@@ -16,7 +17,7 @@ fn generate_random_strings(count: usize, length: usize) -> Vec<String> {
 fn bench_cms_full_load(c: &mut Criterion) {
     let mut group = c.benchmark_group("CountMinSketch_Performance");
 
-    let configurations = [
+    let configurations : [(usize, usize); 3] = [
         (1024, 4),    // Cache L1/L2 friendly
         (65536, 8),   // Cache L3 boundary
         (1048576, 16) // RAM heavy
@@ -26,7 +27,7 @@ fn bench_cms_full_load(c: &mut Criterion) {
     let keys = generate_random_strings(dataset_size, 16);
 
     for (w, d) in configurations {
-        let mut cms = CountMinSketch::new(w, d);
+        let mut cms = CountMinSketch::new(NonZeroUsize::try_from(w).unwrap(), NonZeroUsize::try_from(d).unwrap());
         let parameter_string = format!("W{}xD{}", w, d);
         group.throughput(Throughput::Elements(1));
         let start_stats = ALLOC.stats();
