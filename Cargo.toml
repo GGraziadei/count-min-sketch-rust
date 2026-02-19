@@ -1,6 +1,6 @@
 [package]
 name = "count-min-sketch-rs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Gianluca Graziadei <graziadei.gianluca@gmail.com>"]
 edition = "2024"
 description = "A high-performance, zero-allocation Count-Min Sketch implementation for frequency estimation."
