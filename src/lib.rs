@@ -1,5 +1,7 @@
 use std::hash::Hash;
+use std::num::NonZeroUsize;
 use ahash::RandomState;
+
 
 /// A high-performance, memory-efficient probabilistic data structure for frequency estimation.
 ///
@@ -7,9 +9,9 @@ use ahash::RandomState;
 /// It provides an upper-bound estimate with a controlled error margin ($\epsilon$) and 
 /// confidence level ($\delta$).
 pub struct CountMinSketch {
-    pub width: usize,
+    width: usize,
     width_mask: usize,
-    pub depth: usize,
+    depth: usize,
     table: Box<[u64]>,
     hasher: RandomState,
 }
@@ -18,26 +20,29 @@ impl CountMinSketch {
     /// Creates a new sketch with dimensions derived from statistical parameters.
     ///
     /// # Arguments
-    /// * `epsilon` - The error margin. The estimation will be within `actual + epsilon * total_increments`.
-    /// * `delta` - The error probability. The confidence of the estimate is `1 - delta`.
+    /// * `epsilon` - The error margin. The estimation will be within `actual + epsilon * total_increments`, it is a positive between 0 and 1 excluded.
+    /// * `delta` - The error probability. The confidence of the estimate is `1 - delta`, it is a positive between 0 and 1 excluded.
     ///
     pub fn with_params(epsilon: f64, delta: f64) -> Self {
+        assert!(epsilon > 0. && epsilon < 1., "epsilon must be a positive between 0 and 1 excluded.");
+        assert!(delta > 0. && delta < 1., "delta must be a positive between 0 and 1 excluded.");
         let width = (std::f64::consts::E / epsilon).ceil() as usize;
         let depth = (1.0 / delta).ln().ceil() as usize;
-        Self::new(width, depth)
+        Self::new(NonZeroUsize::try_from(width).unwrap(), NonZeroUsize::try_from(depth).unwrap())
     }
 
     /// Creates a new sketch with explicit `width` and `depth`.
     ///
     /// `width` will be automatically rounded up to the nearest power of two to optimize 
     /// index calculations using bitwise masking.
-    pub fn new(width: usize, depth: usize) -> Self {
-        let w = width.next_power_of_two();
+    pub fn new(width: NonZeroUsize, depth: NonZeroUsize) -> Self {
+        let w = width.get().next_power_of_two();
+        let d = depth.get().next_power_of_two();
         Self {
             width: w,
             width_mask: w - 1,
-            depth,
-            table: vec![0u64; w * depth].into_boxed_slice(),
+            depth: d,
+            table: vec![0u64; w * d].into_boxed_slice(),
             hasher: RandomState::with_seeds(2025, 2, 18, 2118),
         }
     }
@@ -47,18 +52,25 @@ impl CountMinSketch {
     /// Useful for deterministic testing or distributed sketches that must use the same hash network.
     ///
     /// Panics if the seeds array does not contain exactly 4 elements (standard for `RandomState`).
-    pub fn with_seeds(width: usize, depth: usize, seeds: [u64; 4]) -> Self {
-        if seeds.len() != 4 {
-            panic!("seeds must have 4 elements");
-        }
-        let w = width.next_power_of_two();
+    pub fn with_seeds(width: NonZeroUsize, depth: NonZeroUsize, seeds: [u64; 4]) -> Self {
+        let w = width.get().next_power_of_two();
+        let d = depth.get().next_power_of_two();
         Self {
             width: w,
             width_mask: w - 1,
-            depth,
-            table: vec![0u64; w * depth].into_boxed_slice(),
+            depth: d,
+            table: vec![0u64; w * d].into_boxed_slice(),
             hasher: RandomState::with_seeds(seeds[0], seeds[1], seeds[2], seeds[3]),
         }
+    }
+    /// Returns the table width
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+    
+    /// Returns the table depth
+    pub fn get_depth(&self) -> usize {
+        self.depth
     }
     
     #[inline(always)]
@@ -128,7 +140,11 @@ impl CountMinSketch {
         Ok(())
     }
 
+    /// Resets all frequency counters to zero.
+    ///
+    /// This operation clears the internal table, effectively resetting the sketch
+    /// to its initial state while preserving its dimensions and hash configuration.
     pub fn clear(&mut self) {
-        self.table.fill(0);
+        self.table = vec![0u64; self.width * self.depth].into_boxed_slice();
     }
 }
