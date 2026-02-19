@@ -96,3 +96,7 @@ fn main() {
     assert_eq!(cms.estimate("apple"), 0);
 }
 ```
+
+## Performance evaluation
+The full interactive benchmark suite is available online:
+ **[View Live Criterion Report](https://ggraziadei.github.io/count-min-sketch-rust/report/)**
