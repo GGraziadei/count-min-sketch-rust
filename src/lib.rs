@@ -1,6 +1,11 @@
 use std::hash::Hash;
 use ahash::RandomState;
 
+/// A high-performance, memory-efficient probabilistic data structure for frequency estimation.
+///
+/// `CountMinSketch` uses a fixed-size table to estimate the frequency of items in a stream.
+/// It provides an upper-bound estimate with a controlled error margin ($\epsilon$) and 
+/// confidence level ($\delta$).
 pub struct CountMinSketch {
     pub width: usize,
     width_mask: usize,
@@ -10,12 +15,22 @@ pub struct CountMinSketch {
 }
 
 impl CountMinSketch {
+    /// Creates a new sketch with dimensions derived from statistical parameters.
+    ///
+    /// # Arguments
+    /// * `epsilon` - The error margin. The estimation will be within `actual + epsilon * total_increments`.
+    /// * `delta` - The error probability. The confidence of the estimate is `1 - delta`.
+    ///
     pub fn with_params(epsilon: f64, delta: f64) -> Self {
         let width = (std::f64::consts::E / epsilon).ceil() as usize;
         let depth = (1.0 / delta).ln().ceil() as usize;
         Self::new(width, depth)
     }
 
+    /// Creates a new sketch with explicit `width` and `depth`.
+    ///
+    /// `width` will be automatically rounded up to the nearest power of two to optimize 
+    /// index calculations using bitwise masking.
     pub fn new(width: usize, depth: usize) -> Self {
         let w = width.next_power_of_two();
         Self {
@@ -26,7 +41,12 @@ impl CountMinSketch {
             hasher: RandomState::with_seeds(2025, 2, 18, 2118),
         }
     }
-
+    
+    /// Creates a new sketch with explicit dimensions and custom hash seeds.
+    ///
+    /// Useful for deterministic testing or distributed sketches that must use the same hash network.
+    ///
+    /// Panics if the seeds array does not contain exactly 4 elements (standard for `RandomState`).
     pub fn with_seeds(width: usize, depth: usize, seeds: [u64; 4]) -> Self {
         if seeds.len() != 4 {
             panic!("seeds must have 4 elements");
@@ -58,6 +78,10 @@ impl CountMinSketch {
         }
     }
 
+    /// Increments the frequency count for the given item.
+    ///
+    /// This operation is $O(depth)$ and involves zero heap allocations. 
+    /// It uses saturating addition to prevent counter overflow.
     #[inline]
     pub fn increment<T: Hash + ?Sized>(&mut self, item: &T) {
         let h1 = self.hasher.hash_one(item);
@@ -71,6 +95,10 @@ impl CountMinSketch {
         });
     }
 
+    /// Estimates the frequency count of the given item.
+    ///
+    /// Returns the minimum value across all hash rows. 
+    /// Guaranteed to be greater than or equal to the actual count.
     #[inline]
     pub fn estimate<T: Hash + ?Sized>(&self, item: &T) -> u64 {
         let h1 = self.hasher.hash_one(item);
@@ -86,6 +114,10 @@ impl CountMinSketch {
         if min_val == u64::MAX { 0 } else { min_val }
     }
 
+    /// Merges another Count-Min Sketch into this one.
+    ///
+    /// # Errors
+    /// Returns an error if the sketches have different `width` or `depth` dimensions.
     pub fn merge(&mut self, other: &Self) -> Result<(), &'static str> {
         if self.width != other.width || self.depth != other.depth {
             return Err("Incompatible dimensions");

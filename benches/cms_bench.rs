@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use count_min_sketch::CountMinSketch;
+use count_min_sketch_rs::CountMinSketch;
 use std::time::Duration;
 use std::alloc::System;
 use stats_alloc::{StatsAlloc, INSTRUMENTED_SYSTEM};

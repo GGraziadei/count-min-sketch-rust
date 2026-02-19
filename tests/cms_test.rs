@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-use count_min_sketch::CountMinSketch;
+use count_min_sketch_rs::CountMinSketch;
 
     #[test]
     fn test_initialization() {

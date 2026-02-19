@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use count_min_sketch::CountMinSketch;
+use count_min_sketch_rs::CountMinSketch;
 use std::collections::HashMap;
 
 fn bench_accuracy_metrics(c: &mut Criterion) {
