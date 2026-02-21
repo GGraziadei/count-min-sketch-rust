@@ -140,6 +140,49 @@ impl CountMinSketch {
         Ok(())
     }
 
+    /// Calculates the L1 distance (Manhattan Distance) between two sketches.
+    /// Estimates the sum of absolute differences in frequencies.
+    pub fn l1_distance(&self, other: &Self) -> Result<u64, &'static str> {
+        if self.width != other.width || self.depth != other.depth {
+            return Err("Incompatible dimensions.");
+        }
+        let mut min_l1 = u64::MAX;
+        for d in 0..self.depth {
+            let start = d * self.width;
+            let end = start + self.width;
+            let row_l1: u64 = self.table[start..end]
+                .iter()
+                .zip(&other.table[start..end])
+                .map(|(&a, &b)| a.abs_diff(b))
+                .sum();
+            min_l1 = min_l1.min(row_l1);
+        }
+        Ok(min_l1)
+    }
+
+    /// Calculates the Cosine Similarity between two sketches [0.0 to 1.0].
+    /// A value of 1.0 means the distributions are identical.
+    pub fn cosine_similarity(&self, other: &Self) -> Result<f64, &'static str> {
+        if self.width != other.width || self.depth != other.depth {
+            return Err("Incompatible dimensions.");
+        }
+        let mut max_sim: f64 = 0.0;
+        for d in 0..self.depth {
+            let (mut dot, mut n_a, mut n_b) = (0.0, 0.0, 0.0);
+            let start = d * self.width;
+            for (&a, &b) in self.table[start..start+self.width].iter().zip(&other.table[start..start+self.width]) {
+                let (fa, fb) = (a as f64, b as f64);
+                dot += fa * fb;
+                n_a += fa * fa;
+                n_b += fb * fb;
+            }
+            if n_a > 0.0 && n_b > 0.0 {
+                max_sim = max_sim.max(dot / (n_a.sqrt() * n_b.sqrt()));
+            }
+        }
+        Ok(max_sim)
+    }
+
     /// Resets all frequency counters to zero.
     ///
     /// This operation clears the internal table, effectively resetting the sketch
