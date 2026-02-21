@@ -58,10 +58,24 @@ fn bench_cms_comparison(c: &mut Criterion) {
         })
     });
 
+    // Benchmark Cosine ok
+    group.bench_function(BenchmarkId::new("Cosine_Similarity_true", &parameter_string), |b| {
+        b.iter(|| {
+            black_box(cms_u.cosine_similarity(black_box(&cms_u)).unwrap())
+        })
+    });
+
     // Benchmark L1 Distance
     group.bench_function(BenchmarkId::new("L1_Distance", &parameter_string), |b| {
         b.iter(|| {
             black_box(cms_u.l1_distance(black_box(&cms_n)).unwrap())
+        })
+    });
+
+    // Benchmark L1 Distance 0
+    group.bench_function(BenchmarkId::new("L1_Distance_0", &parameter_string), |b| {
+        b.iter(|| {
+            black_box(cms_u.l1_distance(black_box(&cms_u)).unwrap())
         })
     });
 
