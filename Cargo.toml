@@ -1,0 +1,28 @@
+[package]
+name = "count-min-sketch-rs"
+version = "0.1.1"
+authors = ["Gianluca Graziadei <graziadei.gianluca@gmail.com>"]
+edition = "2024"
+description = "A high-performance, zero-allocation Count-Min Sketch implementation for frequency estimation."
+license = "MIT"
+repository = "https://github.com/GGraziadei/count-min-sketch-rust"
+readme = "README.md"
+keywords = ["sketch", "probabilistic", "streaming", "frequency-estimation", "data-structure"]
+categories = ["data-structures", "algorithms"]
+
+[dependencies]
+ahash = "0.8.12"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+rand = "0.10.0"
+rand_distr = "0.6.0"
+stats_alloc = "0.1"
+
+[[bench]]
+name = "cms_bench"
+harness = false
+
+[[bench]]
+name = "cms_error"
+harness = false
